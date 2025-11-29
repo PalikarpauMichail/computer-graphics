@@ -192,11 +192,6 @@ class ColorApp:
         self.s_var.set(round(s * 100, 2))
         self.v_var.set(round(v * 100, 2))
 
-        # ЕСЛИ НУЖЕН HLS (Нечетный вариант):
-        # h, l, s_hls = colorsys.rgb_to_hls(rn, gn, bn)
-        # self.h_var.set(round(h * 360, 2))
-        # self.v_var.set(round(l * 100, 2)) # Тут L пишем в v_var для простоты UI
-        # self.s_var.set(round(s_hls * 100, 2))
 
     def update_from_cmyk(self):
         """Источник правды - CMYK слайдеры. Обновляем RGB, затем HSV."""
@@ -223,7 +218,6 @@ class ColorApp:
         self.h_var.set(round(h * 360, 2))
         self.s_var.set(round(s * 100, 2))
         self.v_var.set(round(v * 100, 2))
-        # См. выше комментарий про HLS
 
     def update_from_hsv(self):
         """Источник правды - HSV слайдеры. Обновляем RGB, затем CMYK."""
@@ -233,7 +227,6 @@ class ColorApp:
 
         # HSV -> RGB
         rn, gn, bn = colorsys.hsv_to_rgb(h, s, v)
-        # ДЛЯ HLS: rn, gn, bn = colorsys.hls_to_rgb(h, v, s) # Обратите внимание на порядок v=L
 
         r, g, b = rn * 255, gn * 255, bn * 255
         
