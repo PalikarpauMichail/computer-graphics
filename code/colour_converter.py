@@ -232,6 +232,10 @@ class ColorApp:
         s = self.s_var.get() / 100
         v = self.v_var.get() / 100
 
+        self.h_var.set(round(self.h_var.get(), 2))
+        self.s_var.set(round(self.s_var.get(), 2))
+        self.v_var.set(round(self.v_var.get(), 2))
+
         # HSV -> RGB
         rn, gn, bn = colorsys.hsv_to_rgb(h, s, v)
 
