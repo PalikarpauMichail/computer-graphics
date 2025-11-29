@@ -161,14 +161,15 @@ class ColorApp:
     # --- Основные функции пересчета ---
 
     def update_from_rgb(self):
-        """Источник правды - RGB слайдеры. Обновляем CMYK, HSV и превью."""
         # Получаем значения
         r = self._clamp(self.r_var.get(), 0, 255)
         g = self._clamp(self.g_var.get(), 0, 255)
         b = self._clamp(self.b_var.get(), 0, 255)
-        
+        r, g, b = map(round, (r, g, b))
         # Обновляем превью
-        self.update_preview(int(r), int(g), int(b))
+        self.r_var.set(round(r))
+        self.g_var.set(round(g))
+        self.b_var.set(round(b))
 
         # 1. RGB -> CMYK
         # Нормализуем 0..1
@@ -200,17 +201,23 @@ class ColorApp:
         y = self.y_var.get() / 100
         k = self.k_var.get() / 100
 
+
+        self.c_var.set(round(self.c_var.get(), 2))
+        self.m_var.set(round(self.m_var.get(), 2))
+        self.y_var.set(round(self.y_var.get(), 2))
+        self.k_var.set(round(self.k_var.get(), 2))
+
         # CMYK -> RGB
         r = 255 * (1 - c) * (1 - k)
         g = 255 * (1 - m) * (1 - k)
         b = 255 * (1 - y) * (1 - k)
 
         # Ставим в RGB переменные (это НЕ вызовет on_rgb_change из-за флага is_updating)
-        self.r_var.set(int(r))
-        self.g_var.set(int(g))
-        self.b_var.set(int(b))
+        self.r_var.set(round(r))
+        self.g_var.set(round(g))
+        self.b_var.set(round(b))
 
-        self.update_preview(int(r), int(g), int(b))
+        self.update_preview(round(r), round(g), round(b))
 
         # Теперь обновляем 3-ю модель (HSV) на основе нового RGB
         rn, gn, bn = r/255, g/255, b/255
