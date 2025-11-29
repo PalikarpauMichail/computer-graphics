@@ -80,7 +80,7 @@ class RasterizationApp:
             fields = [("X центра", "0"), ("Y центра", "0"), ("Радиус", "10")]
             keys = ["x1", "y1", "r"]
         else:
-            fields = [("X1", "-10"), ("Y1", "-5"), ("X2", "15"), ("Y2", "10")]
+            fields = [("X1", "-15"), ("Y1", "0"), ("X2", "15"), ("Y2", "3")]
             keys = ["x1", "y1", "x2", "y2"]
 
         for i, (label_text, default) in enumerate(fields):
