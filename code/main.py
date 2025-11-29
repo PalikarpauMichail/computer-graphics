@@ -55,7 +55,7 @@ class ImageProcessingApp:
         lbl_group2.pack(pady=(20, 5))
 
         self.seg_method_var = tk.StringVar(value="Sobel")
-        options = ["Sobel (Градиент)", "Laplacian (Точки/Края)", "Canny (Границы)"]
+        options = ["Sobel (Градиент)", "Canny (Границы)"]
         self.combo_seg = ttk.Combobox(control_frame, values=options, state="readonly")
         self.combo_seg.current(0)
         self.combo_seg.pack(fill=tk.X, pady=5)
@@ -103,7 +103,7 @@ class ImageProcessingApp:
         
         img_tk = ImageTk.PhotoImage(img_pil)
         label_widget.config(image=img_tk, text="")
-        label_widget.image = img_tk # Сохраняем ссылку, чтобы сборщик мусора не удалил
+        label_widget.image = img_tk
 
     def get_odd_block_size(self):
         # Размер блока должен быть нечетным и > 1
@@ -141,7 +141,6 @@ class ImageProcessingApp:
 
         selection = self.combo_seg.get()
         
-        # Предварительно можно размыть изображение, чтобы убрать шум (опционально)
         blur = cv2.GaussianBlur(self.cv_image, (3, 3), 0)
 
         if "Sobel" in selection:
@@ -154,12 +153,7 @@ class ImageProcessingApp:
             
             # Объединяем градиенты (приближенно)
             processed = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
-            
-        elif "Laplacian" in selection:
-            # Лапласиан хорош для выделения всех краев и точек
-            dst = cv2.Laplacian(blur, cv2.CV_16S, ksize=3)
-            processed = cv2.convertScaleAbs(dst)
-            
+             
         elif "Canny" in selection:
             # Детектор границ Кэнни (автоматически включает подавление немаксимумов)
             processed = cv2.Canny(blur, 50, 150)
