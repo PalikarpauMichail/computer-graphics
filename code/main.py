@@ -55,7 +55,7 @@ class ImageProcessingApp:
         lbl_group2.pack(pady=(20, 5))
 
         self.seg_method_var = tk.StringVar(value="Sobel")
-        options = ["Sobel (Градиент)", "Canny (Границы)"]
+        options = ["Sobel", "Canny"]
         self.combo_seg = ttk.Combobox(control_frame, values=options, state="readonly")
         self.combo_seg.current(0)
         self.combo_seg.pack(fill=tk.X, pady=5)
@@ -144,7 +144,6 @@ class ImageProcessingApp:
         blur = cv2.GaussianBlur(self.cv_image, (3, 3), 0)
 
         if "Sobel" in selection:
-            # Градиенты по X и Y
             grad_x = cv2.Sobel(blur, cv2.CV_16S, 1, 0, ksize=3)
             grad_y = cv2.Sobel(blur, cv2.CV_16S, 0, 1, ksize=3)
             
@@ -155,7 +154,6 @@ class ImageProcessingApp:
             processed = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
              
         elif "Canny" in selection:
-            # Детектор границ Кэнни (автоматически включает подавление немаксимумов)
             processed = cv2.Canny(blur, 50, 150)
 
         self.show_image(processed, self.lbl_processed)
