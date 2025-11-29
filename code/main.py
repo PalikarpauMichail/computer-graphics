@@ -26,7 +26,8 @@ class RasterizationApp:
             ("Пошаговый алгоритм", "step"),
             ("ЦДА (DDA)", "dda"),
             ("Брезенхем (Линия)", "bresenham_line"),
-            ("Брезенхем (Окружность)", "bresenham_circle")
+            ("Брезенхем (Окружность)", "bresenham_circle"),
+            ("Алгоритм Ву", "wu")
         ]
         for text, val in algos:
             tk.Radiobutton(self.controls_frame, text=text, variable=self.algo_var, value=val, command=self.update_inputs, bg="#f0f0f0").pack(anchor="w")
@@ -142,12 +143,22 @@ class RasterizationApp:
         # Y инвертируем, так как на экране Y растет вниз
         return cx + x * self.scale, cy - y * self.scale
 
-    def draw_pixel(self, x, y, color="red"):
+    def draw_pixel(self, x, y, intensity=1.0):
         sx, sy = self.to_screen(x, y)
-        # Рисуем квадратик вокруг точки
         half = self.scale // 2
-        # Чуть меньше клетки, чтобы было видно сетку
         pad = 1
+        
+        # Ограничиваем интенсивность от 0 до 1
+        intensity = max(0.0, min(1.0, intensity))
+        
+        # Вычисляем оттенок серого:
+        # 0 (черный) ... 255 (белый)
+        # Чем выше интенсивность, тем темнее цвет (ближе к 0)
+        val = int(255 * (1 - intensity))
+        
+        # Формируем HEX код цвета (например, #7f7f7f)
+        color = f"#{val:02x}{val:02x}{val:02x}"
+        
         self.canvas.create_rectangle(sx - half + pad, sy - half + pad, 
                                      sx + half - pad, sy + half - pad, 
                                      fill=color, outline="")
@@ -196,13 +207,18 @@ class RasterizationApp:
             points, logs = self.algo_bresenham_line(*params)
         elif algo == "bresenham_circle":
             points, logs = self.algo_bresenham_circle(*params)
+        elif algo == "wu":
+            points, logs = self.algo_wu(*params)
             
         end_time = time.perf_counter_ns()
         duration_us = (end_time - start_time) / 1000.0  # в микросекундах
         
         # Отрисовка
-        for px, py in points:
-            self.draw_pixel(px, py)
+        for p in points:
+            if algo == "wu":
+                self.draw_pixel(p[0], p[1], p[2])
+            else:
+                self.draw_pixel(p[0], p[1])
             
         # Вывод логов
         self.log(f"Время выполнения: {duration_us:.3f} мкс")
@@ -353,6 +369,82 @@ class RasterizationApp:
                 
         # Удаляем дубликаты (они могут быть на диагоналях)
         points = list(set(points)) 
+        return points, logs
+
+    def algo_wu(self, x1, y1, x2, y2):
+        points = []
+        logs = []
+        
+        # Вспомогательные функции внутри метода
+        def ipart(x): return int(x)
+        def fpart(x): return x - int(x)
+        def rfpart(x): return 1 - fpart(x)
+        
+        steep = abs(y2 - y1) > abs(x2 - x1)
+        
+        if steep:
+            x1, y1 = y1, x1
+            x2, y2 = y2, x2
+            
+        if x2 < x1:
+            x1, x2 = x2, x1
+            y1, y2 = y2, y1
+            
+        dx = x2 - x1
+        dy = y2 - y1
+        gradient = dy / dx if dx != 0 else 1.0
+        
+        # Обработка первой точки
+        xend = round(x1)
+        yend = y1 + gradient * (xend - x1)
+        xgap = rfpart(x1 + 0.5)
+        x_pixel1 = xend
+        y_pixel1 = ipart(yend)
+        
+        if steep:
+            points.append((y_pixel1, x_pixel1, rfpart(yend) * xgap))
+            points.append((y_pixel1 + 1, x_pixel1, fpart(yend) * xgap))
+        else:
+            points.append((x_pixel1, y_pixel1, rfpart(yend) * xgap))
+            points.append((x_pixel1, y_pixel1 + 1, fpart(yend) * xgap))
+            
+        intery = yend + gradient
+        
+        logs.append(f"Steep={steep}, gradient={gradient:.2f}")
+        logs.append(f"Start: ({x_pixel1}, {y_pixel1})")
+
+        # Основной цикл
+        for x in range(x_pixel1 + 1, x2):
+            y_int = ipart(intery)
+            # Яркость первого пикселя (чем ближе линия, тем ярче)
+            b1 = rfpart(intery)
+            # Яркость второго пикселя (соседнего)
+            b2 = fpart(intery)
+            
+            if steep:
+                points.append((y_int, x, b1))
+                points.append((y_int + 1, x, b2))
+            else:
+                points.append((x, y_int, b1))
+                points.append((x, y_int + 1, b2))
+                
+            logs.append(f"x={x}: y~{intery:.2f}, I1={b1:.2f}, I2={b2:.2f}")
+            intery += gradient
+
+        # Обработка последней точки
+        xend = round(x2)
+        yend = y2 + gradient * (xend - x2)
+        xgap = fpart(x2 + 0.5)
+        x_pixel2 = xend
+        y_pixel2 = ipart(yend)
+        
+        if steep:
+            points.append((y_pixel2, x_pixel2, rfpart(yend) * xgap))
+            points.append((y_pixel2 + 1, x_pixel2, fpart(yend) * xgap))
+        else:
+            points.append((x_pixel2, y_pixel2, rfpart(yend) * xgap))
+            points.append((x_pixel2, y_pixel2 + 1, fpart(yend) * xgap))
+            
         return points, logs
 
 if __name__ == "__main__":
